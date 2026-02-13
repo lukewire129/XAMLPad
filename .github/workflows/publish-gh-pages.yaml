@@ -32,11 +32,13 @@ jobs:
         with:
           dotnet-version: '10.x'   # OpenSilver 안정버전 기준
 
+      # 1. 워크로드부터 먼저 복구/설치합니다. (restore 이전에 실행)
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      # 2. 그 다음 프로젝트 패키지를 복구합니다.
       - name: Restore NuGet packages
         run: dotnet restore XAMLPad.sln
-
-      - name: Restore workloads
-        run: dotnet workload restore
 
       - name: Build project
         run: dotnet build XAMLPad.sln -c Release
