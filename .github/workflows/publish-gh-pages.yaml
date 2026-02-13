@@ -49,7 +49,7 @@ jobs:
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./output/wwwroot
+          path: ./output/wwwroot/XAMLPad
 
   deploy:
     name: Deploy OpenSilver App to GitHub Pages
