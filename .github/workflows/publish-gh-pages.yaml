@@ -46,8 +46,18 @@ jobs:
       - name: Publish OpenSilver output
         run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./output
 
+      # --- [추가] GitHub Pages 특화 설정 ---
+      - name: GitHub Pages fixes
+        shell: pwsh
+        run: |
+          # 1. Jekyll 무시 방지
+          New-Item -Path ./output/wwwroot/.nojekyll -ItemType File
+          # 2. SPA 라우팅 대응
+          Copy-Item ./output/wwwroot/index.html ./output/wwwroot/404.html
+          # 3. (옵션) 하위 경로 배포 시 base href 변경이 필요하면 여기서 처리 가능
+
       - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3 # v4보다 안정적인 v3 권장 (환경에 따라 다름)
         with:
           path: ./output/wwwroot
 
