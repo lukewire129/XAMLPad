@@ -46,19 +46,27 @@ jobs:
       - name: Publish OpenSilver output
         run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./output
 
-      # --- [추가] GitHub Pages 특화 설정 ---
       - name: GitHub Pages fixes
+        # shell: pwsh는 Windows Runner에서 잘 작동합니다.
         shell: pwsh
         run: |
-          # 1. Jekyll 무시 방지
-          New-Item -Path ./output/wwwroot/.nojekyll -ItemType File
-          # 2. SPA 라우팅 대응
-          Copy-Item ./output/wwwroot/index.html ./output/wwwroot/404.html
-          # 3. (옵션) 하위 경로 배포 시 base href 변경이 필요하면 여기서 처리 가능
+          # 1. 경로 변수 설정 (오타 방지 및 가독성)
+          $wwwrootPath = "./output/wwwroot"
+          
+          # 2. .nojekyll 파일 생성 (-Force로 덮어쓰기 허용)
+          New-Item -Path "$wwwrootPath/.nojekyll" -ItemType File -Force
+          
+          # 3. SPA 라우팅을 위한 404.html 생성 (OpenSilver 앱의 안정적인 접속을 위해 권장)
+          Copy-Item "$wwwrootPath/index.html" "$wwwrootPath/404.html" -Force
+          
+          # 4. (디버깅용) 실제로 파일이 생성되었는지 로그에 출력
+          Write-Host "Files in wwwroot:"
+          Get-ChildItem -Path $wwwrootPath
 
       - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3 # v4보다 안정적인 v3 권장 (환경에 따라 다름)
+        uses: actions/upload-pages-artifact@v3
         with:
+          # publish 결과물이 모여있는 wwwroot 폴더 전체를 업로드합니다.
           path: ./output/wwwroot
 
   deploy:
