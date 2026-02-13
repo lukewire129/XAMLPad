@@ -17,7 +17,7 @@ jobs:
           dotnet-version: '7.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore YourSolution.sln
+        run: dotnet restore XAMLPad.sln
 
       - name: Build project
         run: dotnet publish .\XAMLPad\XAMLPad.Browser.csproj -c Release -o ./publish
