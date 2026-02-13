@@ -1,30 +1,65 @@
-name: Deploy OpenSilver to GitHub Pages
+name: Publish OpenSilver to GitHub Pages
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - main  # main 브랜치에 커밋될 때 실행
+      - main
+      - 'feature/*'
+    paths:
+      - 'src/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build_artifact:
+    name: Build OpenSilver App
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '7.0.x'
+          dotnet-version: '7.x'   # OpenSilver 안정버전 기준
 
-      - name: Restore dependencies
+      - name: Restore NuGet packages
         run: dotnet restore XAMLPad.sln
 
       - name: Build project
-        run: dotnet publish .\XAMLPad\XAMLPad.Browser.csproj -c Release -o ./publish
+        run: dotnet build .XAMLPad.sln -c Release
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v6
+      - name: Publish OpenSilver output
+        run: dotnet publish ./XAMLPad/XAMLPad.Browser.csproj -c Release -o ./output
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./publish/wwwroot
-          publish_branch: gh-pages
+          path: ./output
+
+  deploy:
+    name: Deploy OpenSilver App to GitHub Pages
+    needs: build_artifact
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
