@@ -46,14 +46,6 @@ jobs:
       - name: Publish OpenSilver output
         run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./output
 
-      # 1. Jekyll 기능을 끄기 위한 빈 파일 생성 (가장 중요!)
-      - name: Add .nojekyll file
-        run: touch ./output/wwwroot/.nojekyll
-
-      # 2. 404 에러 방지를 위한 index.html 복사 (SPA 라우팅 대비)
-      - name: Copy index.html to 404.html
-        run: cp ./output/wwwroot/index.html ./output/wwwroot/404.html
-        
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v4
         with:
