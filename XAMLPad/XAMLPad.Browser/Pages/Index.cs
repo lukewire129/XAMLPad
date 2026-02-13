@@ -6,6 +6,7 @@ using OpenSilver.WebAssembly;
 namespace XAMLPad.Browser.Pages
 {
     [Route("/")]
+    [Route ("/index.html")]    // 파일명 직접 호출 경로 (https://.../XAMLPad/index.html)
     public class Index : ComponentBase
     {
         protected override void BuildRenderTree(RenderTreeBuilder __builder)
