@@ -5,9 +5,6 @@ on:
   push:
     branches:
       - main
-      - 'feature/*'
-    paths:
-      - 'src/**'
   pull_request:
     branches:
       - main
@@ -39,7 +36,7 @@ jobs:
         run: dotnet restore XAMLPad.sln
 
       - name: Build project
-        run: dotnet build .XAMLPad.sln -c Release
+        run: dotnet build XAMLPad.sln -c Release
 
       - name: Publish OpenSilver output
         run: dotnet publish ./XAMLPad/XAMLPad.Browser.csproj -c Release -o ./output
