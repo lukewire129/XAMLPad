@@ -1,86 +1,45 @@
 name: Publish OpenSilver to GitHub Pages
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  contents: write  # 브랜치에 푸시하기 위해 반드시 write 권한 필요
 
 jobs:
-  build_artifact:
-    name: Build OpenSilver App
+  build-and-deploy:
     runs-on: windows-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'   # OpenSilver 안정버전 기준
+          dotnet-version: '9.x' # 사용 중인 버전으로 유지
 
-      # 1. 워크로드부터 먼저 복구/설치합니다. (restore 이전에 실행)
-      - name: Install wasm-tools workload
+      - name: Install wasm-tools
         run: dotnet workload install wasm-tools
 
-      # 2. 그 다음 프로젝트 패키지를 복구합니다.
-      - name: Restore NuGet packages
-        run: dotnet restore XAMLPad.sln
+      - name: Publish Project
+        # 출력 경로를 ./publish로 지정
+        run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./publish
 
-      - name: Build project
-        run: dotnet build XAMLPad.sln -c Release
-
-      - name: Publish OpenSilver output
-        run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./output
-
-      - name: GitHub Pages fixes
-        # shell: pwsh는 Windows Runner에서 잘 작동합니다.
+      - name: Prepare GitHub Pages Files
         shell: pwsh
         run: |
-          # 1. 경로 변수 설정 (오타 방지 및 가독성)
-          $wwwrootPath = "./output/wwwroot"
+          $wwwroot = "./publish/wwwroot"
+          # 1. .nojekyll 생성 (밑줄 폴더 무시 방지)
+          New-Item -Path "$wwwroot/.nojekyll" -ItemType File -Force
+          # 2. 404.html 생성 (SPA 라우팅 대응)
+          Copy-Item "$wwwroot/index.html" "$wwwroot/404.html" -Force
           
-          # 2. .nojekyll 파일 생성 (-Force로 덮어쓰기 허용)
-          New-Item -Path "$wwwrootPath/.nojekyll" -ItemType File -Force
-          
-          # 3. SPA 라우팅을 위한 404.html 생성 (OpenSilver 앱의 안정적인 접속을 위해 권장)
-          Copy-Item "$wwwrootPath/index.html" "$wwwrootPath/404.html" -Force
-          
-          # 4. (디버깅용) 실제로 파일이 생성되었는지 로그에 출력
-          Write-Host "Files in wwwroot:"
-          Get-ChildItem -Path $wwwrootPath
-
-      - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          # publish 결과물이 모여있는 wwwroot 폴더 전체를 업로드합니다.
-          path: ./output/wwwroot
-
-  deploy:
-    name: Deploy OpenSilver App to GitHub Pages
-    needs: build_artifact
-    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-
-        uses: actions/deploy-pages@v4
+          folder: ./publish/wwwroot # 배포할 파일이 있는 폴더
+          branch: gh-pages        # 파일을 보낼 브랜치
+          clean: true             # 이전 배포 파일 삭제
