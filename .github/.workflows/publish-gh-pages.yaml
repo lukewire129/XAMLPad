@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build_artifact:
     name: Build OpenSilver App
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
@@ -59,4 +59,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+
         uses: actions/deploy-pages@v4
