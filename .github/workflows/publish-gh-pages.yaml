@@ -6,40 +6,60 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # 브랜치에 푸시하기 위해 반드시 write 권한 필요
+  contents: write
 
 jobs:
-  build-and-deploy:
-    runs-on: windows-latest
+  build:
+    name: Build OpenSilver
+    runs-on: windows-latest # 빌드는 윈도우에서!
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x' # 사용 중인 버전으로 유지
+          dotnet-version: '9.x' 
 
       - name: Install wasm-tools
         run: dotnet workload install wasm-tools
 
-      - name: Publish Project
-        # 출력 경로를 ./publish로 지정
+      - name: Publish
         run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./publish
 
-      - name: Prepare GitHub Pages Files
+      - name: OpenSilver Fixes
         shell: pwsh
         run: |
           $wwwroot = "./publish/wwwroot"
-          # 1. .nojekyll 생성 (밑줄 폴더 무시 방지)
           New-Item -Path "$wwwroot/.nojekyll" -ItemType File -Force
-          # 2. 404.html 생성 (SPA 라우팅 대응)
           Copy-Item "$wwwroot/index.html" "$wwwroot/404.html" -Force
-          
-      - name: Deploy to gh-pages branch
+
+      # 빌드된 결과물을 잠시 보관 (이름: release-files)
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: ./publish/wwwroot
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest # 배포(rsync)는 리눅스에서!
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 윈도우에서 만든 빌드 파일을 가져옴
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: ./dist
+
+      - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./publish/wwwroot # 배포할 파일이 있는 폴더
-          branch: gh-pages        # 파일을 보낼 브랜치
-          clean: true             # 이전 배포 파일 삭제
+          folder: ./dist
+          branch: gh-pages
+          clean: true
