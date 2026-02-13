@@ -30,7 +30,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '7.x'   # OpenSilver 안정버전 기준
+          dotnet-version: '10.x'   # OpenSilver 안정버전 기준
 
       - name: Restore NuGet packages
         run: dotnet restore XAMLPad.sln
