@@ -39,7 +39,7 @@ jobs:
         run: dotnet build XAMLPad.sln -c Release
 
       - name: Publish OpenSilver output
-        run: dotnet publish ./XAMLPad/XAMLPad.Browser.csproj -c Release -o ./output
+        run: dotnet publish ./XAMLPad/XAMLPad.Browser/XAMLPad.Browser.csproj -c Release -o ./output
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v4
