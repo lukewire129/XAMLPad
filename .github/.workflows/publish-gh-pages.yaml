@@ -1,0 +1,30 @@
+name: Deploy OpenSilver to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 커밋될 때 실행
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore YourSolution.sln
+
+      - name: Build project
+        run: dotnet publish .\XAMLPad\XAMLPad.Browser.csproj -c Release -o ./publish
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./publish/wwwroot
+          publish_branch: gh-pages
